@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Room Control</title>
+    <link rel= "stylesheet" href="style.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
+</head>
+<body class="room-control-page">
+    <div class="app-container">
+        <header class="app-header">
+            <div class="profile-section">
+                <div class="profile-avatar"></div>
+                <span id="currentUsernameDisplay" class="profile-name">User</span>
+            </div>
+            <div class="timer-section">
+                <div class="timer-unit">
+                    <span id="hoursDisplay" class="timer-value">00</span>
+                    <span class="timer-label">Hours</span>
+                </div>
+                <div class="timer-unit">
+                    <span id="minutesDisplay" class="timer-value">00</span>
+                    <span class="timer-label">Minutes</span>
+                </div>
+                <div class="timer-unit">
+                    <span id="secondsDisplay" class="timer-value">00</span>
+                    <span class="timer-label">Seconds</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="app-main-content">
+            <section class="room-control-section">
+                <h2>Room Control</h2>
+                <div class="device-buttons">
+                    <button class="device-button" id="light1Btn" data-device="light1">Light 1</button>
+                    <button class="device-button" id="light2Btn" data-device="light2">Light 2</button>
+                    <button class="device-button" id="fanBtn" data-device="fan">Fan</button>
+                    <button class="device-button" id="acBtn" data-device="ac">AC</button>
+                    <button class="device-button back-button" id="backBtn">Back</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <select id="userSelect" style="display:none;"></select>
+    <video id="webcam" autoplay muted playsinline style="display:none;"></video>
+    <canvas id="canvas" style="display:none;"></canvas>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

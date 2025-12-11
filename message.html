@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Blink Morse Communicator - Message</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
+</head>
+<body class="message-page">
+    <div class="message-container">
+        <div class="app-header" style="grid-column: 1 / -1; border-radius: 6px;">
+            <div class="profile-section">
+                <div class="profile-avatar"></div>
+                <span id="currentUsernameDisplay" class="profile-name">User</span>
+            </div>
+            <div class="status-container" style="display:flex; align-items:center; gap:10px;">
+                <div id="statusText" style="color:var(--success-green); font-weight:bold;">Ready</div>
+            </div>
+            <div class="timer" id="timerDisplay">00:00:00</div>
+        </div>
+
+        <div class="morse-grid-left" id="morseGridLeft">
+            <div class="morse-cell"><div class="letter">A</div><div class="code">.-</div></div>
+            <div class="morse-cell"><div class="letter">B</div><div class="code">-...</div></div>
+            <div class="morse-cell"><div class="letter">C</div><div class="code">-.-.</div></div>
+            <div class="morse-cell"><div class="letter">D</div><div class="code">-..</div></div>
+            <div class="morse-cell"><div class="letter">E</div><div class="code">.</div></div>
+            <div class="morse-cell"><div class="letter">F</div><div class="code">..-.</div></div>
+            <div class="morse-cell"><div class="letter">G</div><div class="code">--.</div></div>
+            <div class="morse-cell"><div class="letter">H</div><div class="code">....</div></div>
+            <div class="morse-cell"><div class="letter">I</div><div class="code">..</div></div>
+            <div class="morse-cell"><div class="letter">J</div><div class="code">.---</div></div>
+            <div class="morse-cell"><div class="letter">K</div><div class="code">-.-</div></div>
+            <div class="morse-cell"><div class="letter">L</div><div class="code">.-..</div></div>
+            <div class="morse-cell"><div class="letter">M</div><div class="code">--</div></div>
+        </div>
+
+        <div class="video-area">
+            <video id="webcam" autoplay muted playsinline></video>
+            <canvas id="canvas" style="display:none;"></canvas>
+        </div>
+
+        <div class="morse-grid-right" id="morseGridRight">
+            <div class="morse-cell"><div class="letter">N</div><div class="code">-.</div></div>
+            <div class="morse-cell"><div class="letter">O</div><div class="code">---</div></div>
+            <div class="morse-cell"><div class="letter">P</div><div class="code">.--.</div></div>
+            <div class="morse-cell"><div class="letter">Q</div><div class="code">--.-</div></div>
+            <div class="morse-cell"><div class="letter">R</div><div class="code">.-.</div></div>
+            <div class="morse-cell"><div class="letter">S</div><div class="code">...</div></div>
+            <div class="morse-cell"><div class="letter">T</div><div class="code">-</div></div>
+            <div class="morse-cell"><div class="letter">U</div><div class="code">..-</div></div>
+            <div class="morse-cell"><div class="letter">V</div><div class="code">...-</div></div>
+            <div class="morse-cell"><div class="letter">W</div><div class="code">.--</div></div>
+            <div class="morse-cell"><div class="letter">X</div><div class="code">-..-</div></div>
+            <div class="morse-cell"><div class="letter">Y</div><div class="code">-.--</div></div>
+            <div class="morse-cell"><div class="letter">Z</div><div class="code">--..</div></div>
+        </div>
+
+        <div class="message-display" id="messageDisplay">Message: </div>
+        <div class="morse-display" id="morseDisplay">Morse: </div>
+
+        <div class="controls">
+            <button id="startButton" class="control-button start">START</button>
+            <button id="stopButton" class="control-button stop">STOP</button>
+            <a href="/" class="control-button tertiary" style="text-decoration:none; display:flex; align-items:center;">Back</a>
+        </div>
+        
+        <select id="userSelect" style="display:none;"></select>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
