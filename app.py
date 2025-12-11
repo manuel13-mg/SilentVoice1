@@ -1,9 +1,6 @@
 import os
 import sys
-import eventlet
-
-# Patch for SocketIO performance (must be before other imports)
-eventlet.monkey_patch()
+import threading
 
 from flask import Flask, render_template, jsonify, request
 from flask_socketio import SocketIO, emit
@@ -19,8 +16,8 @@ from backend_modules.communicator import MorseCodeCommunicator
 app = Flask(__name__, template_folder='.', static_folder='.', static_url_path='/')
 app.config['SECRET_KEY'] = 'secret_key_change_in_production'
 
-# Initialize SocketIO with async_mode='eventlet' for better video streaming performance
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet', max_http_buffer_size=10 * 1024 * 1024)
+# Initialize SocketIO with async_mode='threading' for modern threading support
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading', max_http_buffer_size=10 * 1024 * 1024)
 
 # Global Instances
 user_manager = UserManager()
@@ -29,7 +26,7 @@ communicator.user_manager = user_manager  # Link manager if needed
 
 # Global processing state
 processing_thread = None
-thread_lock =  eventlet.semaphore.Semaphore() # Thread safety
+thread_lock = threading.Lock() # Thread safety
 processing_active = False
 
 # --- Routes ---
