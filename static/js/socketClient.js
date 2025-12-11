@@ -1,6 +1,6 @@
 import { state } from './config.js';
 import { moveHighlight, selectHighlightedElement } from './navigation.js';
-import { updateStatus, updateMessageDisplay, updateTimers } from './ui.js';
+import { updateStatus, updateMessageDisplay, updateTimerDisplay } from './ui.js';
 import { stopCommunication } from './main.js'; // Circular dependency handled by function reference
 import { handleGameBlink } from './game.js';
 
@@ -34,7 +34,7 @@ export function setupSocketEvents() {
     state.socket.on('update_ui', (data) => {
         updateMessageDisplay(data);
         updateStatus(data.status);
-        updateTimers(data);
+        updateTimerDisplay();
     });
 
     state.socket.on('status', (data) => {
