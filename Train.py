@@ -162,11 +162,11 @@ class UserTrainer:
                 
                 loss, accuracy = self.classifier.train(dot_blinks, dash_blinks)
                 
-                if loss is not None and accuracy is not None and accuracy > 0.7:
+                if loss is not None and accuracy is not None and accuracy > 0.5:
                     # Save the trained model to the user's directory
                     self.classifier.save_model(user_info['model_path'])
                     self.user_manager.mark_user_trained(username)
-                    
+
                     print(f"Training completed successfully! Accuracy: {accuracy:.2%}")
                     return True
                 else:
