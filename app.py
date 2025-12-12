@@ -63,10 +63,10 @@ def flappy_bird():
 def list_users_api():
     """API endpoint to list all users."""
     users = user_manager.list_users()
-    # Safely get trained status
     user_data = {}
     for u in users:
         info = user_manager.get_user(u)
+        # Safely access 'trained' key
         user_data[u] = {'trained': info.get('trained', False) if info else False}
     return jsonify(user_data)
 
@@ -86,7 +86,6 @@ def handle_connect():
 def handle_disconnect():
     print(f'Client disconnected: {request.sid}')
     # Stop processing if the controlling client disconnects
-    # In a multi-user scenario, you might want to track which SID started the stream
     global processing_active
     processing_active = False
 
@@ -103,10 +102,9 @@ def handle_select_user(data):
     
     # Try to load their trained model
     if communicator.load_user_profile(user_info):
-        print(f"Loaded model for {username}")
         return {'status': 'success', 'message': f"User {username} loaded"}
     else:
-        print(f"User {username} selected (No trained model found)")
+        # Allow selection even if not trained, but warn
         return {'status': 'success', 'message': f"User {username} selected (Not trained)"}
 
 @socketio.on('set_mode')

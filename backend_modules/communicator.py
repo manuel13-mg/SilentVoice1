@@ -9,7 +9,6 @@ class MorseCodeCommunicator:
     def __init__(self):
         self.blink_detector = BlinkDetector()
         self.morse_decoder = MorseCodeDecoder()
-        # UserManager is instantiated in app.py and passed or used separately
         self.classifier = BlinkClassifier()
         self.current_user = None
         
@@ -26,13 +25,12 @@ class MorseCodeCommunicator:
 
     def load_user_profile(self, user_info):
         """Loads the classifier for the selected user."""
-        if user_info and user_info['trained']:
+        if user_info and user_info.get('trained'):
             # Normalize path for cross-platform compatibility
             model_path = os.path.normpath(user_info['model_path'])
             success = self.classifier.load_model(model_path)
             if success:
-                # Optionally adapt timings based on training data if stored
-                pass
+                print(f"User profile loaded from: {model_path}")
             return success
         return False
 
