@@ -1,6 +1,7 @@
 import os
 import sys
 import threading
+import time
 
 from flask import Flask, render_template, jsonify, request
 from flask_socketio import SocketIO, emit
@@ -16,18 +17,19 @@ from backend_modules.communicator import MorseCodeCommunicator
 app = Flask(__name__, template_folder='.', static_folder='.', static_url_path='/')
 app.config['SECRET_KEY'] = 'secret_key_change_in_production'
 
-# Initialize SocketIO with async_mode='threading' for modern threading support
+# Initialize SocketIO
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading', max_http_buffer_size=10 * 1024 * 1024)
 
 # Global Instances
 user_manager = UserManager()
 communicator = MorseCodeCommunicator()
-communicator.user_manager = user_manager  # Link manager if needed
+communicator.user_manager = user_manager
 
 # Global processing state
 processing_thread = None
-thread_lock = threading.Lock() # Thread safety
+thread_lock = threading.Lock()
 processing_active = False
+current_frame = None
 
 # --- Routes ---
 
@@ -61,7 +63,11 @@ def flappy_bird():
 def list_users_api():
     """API endpoint to list all users."""
     users = user_manager.list_users()
-    user_data = {u: {'trained': user_manager.get_user(u)['trained']} for u in users}
+    # Safely get trained status
+    user_data = {}
+    for u in users:
+        info = user_manager.get_user(u)
+        user_data[u] = {'trained': info.get('trained', False) if info else False}
     return jsonify(user_data)
 
 @app.route('/create_user/<username>')
@@ -79,6 +85,8 @@ def handle_connect():
 @socketio.on('disconnect')
 def handle_disconnect():
     print(f'Client disconnected: {request.sid}')
+    # Stop processing if the controlling client disconnects
+    # In a multi-user scenario, you might want to track which SID started the stream
     global processing_active
     processing_active = False
 
@@ -99,14 +107,12 @@ def handle_select_user(data):
         return {'status': 'success', 'message': f"User {username} loaded"}
     else:
         print(f"User {username} selected (No trained model found)")
-        # Allow selection even if not trained, but warn
         return {'status': 'success', 'message': f"User {username} selected (Not trained)"}
 
 @socketio.on('set_mode')
 def set_mode(data):
     mode = data.get('mode')
     print(f"Mode switched to: {mode}")
-    # You can pass this mode to the communicator if logic depends on it
     if mode == 'idle':
         communicator.reset_state()
 
@@ -115,7 +121,6 @@ def start_stream():
     global processing_active, processing_thread
     if not processing_active:
         processing_active = True
-        # Start background task using socketio.start_background_task
         processing_thread = socketio.start_background_task(process_frames, request.sid)
         emit('stream_started', {'message': 'Backend processing started'})
 
@@ -129,60 +134,46 @@ def stop_stream():
 def handle_quick_message(data):
     msg = data.get('message')
     print(f"Quick Message: {msg}")
-    # Logic to handle message (e.g. logging, TTS on server, etc.)
     emit('status', {'message': f"Sent: {msg}"})
 
 @socketio.on('room_command')
 def handle_room_command(data):
     device = data.get('device')
     action = data.get('action')
-    print(f"Room Command: {device} -> {action}")
     # Call the communicator's hardware control method
     result = communicator.send_room_control(device, action)
     emit('status', {'message': result['message']})
 
 @socketio.on('frame')
 def handle_frame(data):
-    """
-    Receives base64 image from client.
-    Because we are using a background thread loop for processing, 
-    we put this frame into a queue or process it directly if efficient.
-    
-    CURRENT APPROACH: The client sends frames. We process them here directly 
-    or store them for the background thread.
-    """
-    # For simplicity in this architecture, we decode and process immediately
-    # inside the event handler or pass to a shared queue.
-    # To avoid blocking the event loop, let's use a queue mechanism if strictly needed,
-    # but for now, we decode here.
-    
     global current_frame
     try:
-        img_bytes = base64.b64decode(data['image'].split(',')[1])
-        nparr = np.frombuffer(img_bytes, np.uint8)
-        frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        # Store frame in a global variable for the background thread to pick up
-        # This is a simple producer-consumer pattern
-        current_frame = frame
+        # Decode base64 image
+        if 'image' in data:
+            img_str = data['image']
+            if ',' in img_str:
+                img_str = img_str.split(',')[1]
+            img_bytes = base64.b64decode(img_str)
+            nparr = np.frombuffer(img_bytes, np.uint8)
+            frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+            current_frame = frame
     except Exception as e:
+        # print(f"Frame decode error: {e}") # Optional logging
         pass
-
-# Global frame buffer for the thread
-current_frame = None
 
 def process_frames(sid):
     """Background thread to process the latest frame."""
     global processing_active, current_frame
     
-    print("Background processing loop started.")
+    print(f"Background processing loop started for SID: {sid}")
     
     while processing_active:
-        socketio.sleep(0.01) # Yield to event loop
+        socketio.sleep(0.02) # Yield to event loop (~50 FPS max)
         
         if current_frame is None:
             continue
             
-        # Grab local reference and process
+        # Grab local reference to avoid race conditions during processing
         frame = current_frame.copy()
         
         # 1. Detect Blink
@@ -190,25 +181,25 @@ def process_frames(sid):
         
         # 2. Logic Flow
         if blink_info:
-            # Predict Dot vs Dash
-            prediction = communicator.classifier.predict(blink_info)
-            blink_type = prediction # 'dot' or 'dash'
+            # Predict Dot vs Dash using the classifier
+            blink_type = communicator.classifier.predict(blink_info) # 'dot' or 'dash'
             
+            print(f"Detected: {blink_type} ({blink_info['duration']:.2f}s)")
+
             # Send Detection Event to Client (for Navigation/Game)
             socketio.emit('blink_detected', {'type': blink_type}, room=sid)
             
-            # Process Morse Logic (if applicable)
-            status, result = communicator.process_blink({
-                'duration': blink_info['duration'], 
-                'timestamp': blink_info['timestamp']
-            })
+            # Process Morse Logic
+            # Pass the already determined blink_type to avoid re-calculation or errors
+            status, result = communicator.process_blink(blink_info, blink_type)
             
             if status == "blink_added":
                 update_ui(sid)
         
         # 3. Check for Time-based Decoding (End of letter/word)
-        decode_status = communicator.handle_time_based_decoding()
-        if "decoded" in decode_status:
+        decode_result = communicator.handle_time_based_decoding()
+        if decode_result["status"] in ["decoded", "space_added"]:
+            print(f"Decoded: {decode_result.get('char', 'SPACE')}")
             update_ui(sid)
 
 def update_ui(sid):
@@ -217,10 +208,11 @@ def update_ui(sid):
         'message': communicator.message_accum,
         'morse_sequence': communicator.current_morse_sequence,
         'status': 'Processing',
-        # Add timer calcs here if needed, or handle in JS
+        # Optional: Add timing info for UI progress bars
+        'letter_timer': max(0, communicator.LETTER_PAUSE - (time.time() - communicator.last_blink_time)) if communicator.current_morse_sequence else 0,
+        'space_timer': max(0, communicator.SPACE_PAUSE - (time.time() - communicator.last_letter_time)) if communicator.last_letter_time > 0 else 0
     }, room=sid)
 
 if __name__ == '__main__':
     print("Starting Blink Communicator Server...")
-    # Using socketio.run instead of app.run for WebSocket support
     socketio.run(app, host='0.0.0.0', port=5000, debug=True)
