@@ -332,14 +332,12 @@ video#webcam {
 .action-button.blue-bg { background-color: var(--primary-blue); }
 
 /* --- CRITICAL: Highlight Class for Scanning --- */
-/* This class is added/removed by JS for navigation */
 .highlighted {
     outline: 4px solid var(--highlight-color) !important;
     box-shadow: 0 0 15px var(--highlight-border) !important;
     transform: scale(1.05) !important;
     z-index: 10;
     position: relative;
-    /* Optional: Add a subtle animation */
     animation: pulse 1.5s infinite;
 }
 
@@ -350,11 +348,9 @@ video#webcam {
 }
 
 /* --- Page Specific: Message.html Grids --- */
-/* (Styles reused from your uploaded message.html inline styles for consistency) */
 .message-container {
     display: grid;
     grid-template-columns: 80px 1fr 80px;
-    /* Adjust grid rows as needed */
     height: 100%;
 }
 
@@ -368,7 +364,7 @@ video#webcam {
     justify-content: center;
     font-family: monospace;
 }
-/* Ensure grids have layout styles if not handled by CSS Grid parent */
+
 .morse-grid-left, .morse-grid-right {
     display: flex;
     flex-wrap: wrap;

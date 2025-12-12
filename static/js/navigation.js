@@ -47,6 +47,7 @@ export function selectHighlightedElement() {
 
     // Handle generic links
     if (el.tagName === 'A') {
+        // Do NOT stop communication here; let main.js auto-start on the next page
         window.location.assign(el.href);
         return;
     }
@@ -55,7 +56,6 @@ export function selectHighlightedElement() {
     if (el.id === 'startButton') startCommunication();
     else if (el.id === 'stopButton') stopCommunication();
     else if (el.id === 'navMessageBtn' && document.body.classList.contains('main-page')) {
-        // Switch to Morse Input Mode
         state.currentMode = 'morse_input';
         state.socket.emit('set_mode', { mode: 'morse_input' });
     }
@@ -70,7 +70,7 @@ export function selectHighlightedElement() {
         window.location.assign(`/devicecontrol.html?device=${el.dataset.device}`);
     }
     else if (el.id === 'backBtn' || el.id === 'backButton') {
-        stopCommunication();
+        // Do NOT stop communication here; allow seamless restart on index page
         window.location.assign('/');
     }
     
