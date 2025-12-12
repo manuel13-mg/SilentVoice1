@@ -15,6 +15,7 @@ export function initializeNavigation() {
     } else if (document.body.classList.contains('room-control-page')) {
         navigableElements = Array.from(document.querySelectorAll('.device-button'));
     } else if (document.body.classList.contains('quick-messages-page')) {
+        // Includes quick message buttons AND the back/start buttons
         navigableElements = Array.from(document.querySelectorAll('.quick-message-button, #backButton, #startQuickMsgButton'));
     } else if (document.body.classList.contains('device-control-page')) {
         navigableElements = Array.from(document.querySelectorAll('.control-button'));
@@ -45,37 +46,54 @@ export function selectHighlightedElement() {
     
     console.log(`Selected: ${el.id || el.innerText}`);
 
-    // Handle generic links
+    // Handle generic links (<a> tags)
     if (el.tagName === 'A') {
-        // Do NOT stop communication here; let main.js auto-start on the next page
         window.location.assign(el.href);
         return;
     }
 
-    // Handle specific Logic
-    if (el.id === 'startButton') startCommunication();
-    else if (el.id === 'stopButton') stopCommunication();
+    // --- Specific Logic ---
+
+    // 1. Check for Back Button FIRST to ensure navigation happens
+    if (el.id === 'backBtn' || el.id === 'backButton') {
+        // Navigate back to index.html without stopping the camera (handled by main.js persistence)
+        window.location.assign('/');
+        return; 
+    }
+    
+    // 2. Main Page Start/Stop
+    else if (el.id === 'startButton') {
+        startCommunication();
+    }
+    else if (el.id === 'stopButton') {
+        stopCommunication();
+    }
     else if (el.id === 'navMessageBtn' && document.body.classList.contains('main-page')) {
+        // Switch to Morse Input Mode if needed
         state.currentMode = 'morse_input';
         state.socket.emit('set_mode', { mode: 'morse_input' });
     }
+    
+    // 3. Quick Messages (Text to Speech)
     else if (el.classList.contains('quick-message-button')) {
-        const text = el.querySelector('.text').innerText;
-        speakMessage(text);
-        if (document.getElementById('messageDisplay')) {
-             document.getElementById('messageDisplay').innerText = `Selected: ${text}`;
+        const textElement = el.querySelector('.text');
+        // Only speak if there is text content (prevents errors on buttons without text)
+        if (textElement) {
+            const text = textElement.innerText;
+            speakMessage(text);
+            if (document.getElementById('messageDisplay')) {
+                 document.getElementById('messageDisplay').innerText = `Selected: ${text}`;
+            }
         }
     }
+    
+    // 4. Device Control
     else if (el.dataset.device) {
         window.location.assign(`/devicecontrol.html?device=${el.dataset.device}`);
     }
-    else if (el.id === 'backBtn' || el.id === 'backButton') {
-        // Do NOT stop communication here; allow seamless restart on index page
-        window.location.assign('/');
-    }
     
-    // Auto-advance if not mode switching
-    if (state.currentMode !== 'morse_input' && el.tagName !== 'A') {
+    // Auto-advance highlight after selection (unless we just navigated away)
+    if (state.currentMode !== 'morse_input' && el.tagName !== 'A' && el.id !== 'backButton' && el.id !== 'backBtn') {
         moveHighlight(1);
     }
 }
