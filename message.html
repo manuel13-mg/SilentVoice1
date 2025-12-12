@@ -36,9 +36,14 @@
             <div class="morse-cell"><div class="letter">M</div><div class="code">--</div></div>
         </div>
 
-        <div class="video-area">
-            <video id="webcam" autoplay muted playsinline></video>
+        <div class="video-area" style="display:flex; flex-direction:column; align-items:center; gap:10px;">
+            <video id="webcam" autoplay muted playsinline style="width: 240px; height: 180px; border-radius: 8px; border: 2px solid #333;"></video>
             <canvas id="canvas" style="display:none;"></canvas>
+            
+            <div style="width: 100%; text-align: center;">
+                <div class="message-display" id="messageDisplay" style="font-size: 1.4rem; font-weight: bold; margin-bottom: 5px;">Message: </div>
+                <div class="morse-display" id="morseSequenceDisplay" style="font-family: monospace; color: #666;">Current: </div>
+            </div>
         </div>
 
         <div class="morse-grid-right" id="morseGridRight">
@@ -57,16 +62,13 @@
             <div class="morse-cell"><div class="letter">Z</div><div class="code">--..</div></div>
         </div>
 
-        <div class="message-display" id="messageDisplay">Message: </div>
-        <div class="morse-display" id="morseDisplay">Morse: </div>
-
         <div class="controls">
             <button id="startButton" class="control-button start">START</button>
             <button id="stopButton" class="control-button stop">STOP</button>
             <a href="/" class="control-button tertiary" style="text-decoration:none; display:flex; align-items:center;">Back</a>
         </div>
         
-    <select id="userSelect"></select>
+    <select id="userSelect" style="display:none;"></select>
     </div>
 
     <script type="module" src="static/js/main.js"></script>
